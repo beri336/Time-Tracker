@@ -2,22 +2,29 @@
 
 import customtkinter as ctk
 import time
-import json
 from datetime import datetime
+import os
+import sqlite3
+from tkinter import filedialog
 
-class ArbeitszeitTracker:
+class WorkTimeTracker:
     def __init__(self, root):
         # GUI
         ctk.set_appearance_mode("System")
         ctk.set_default_color_theme("blue")
 
         self.root = root
-        self.root.title("Arbeitszeit-Tracker")
-        self.root.geometry("400x250")
+        self.root.title("Work Time Tracker")
+        self.root.geometry("400x300")
 
         self.start_time = None
         self.elapsed_time = 0
         self.running = False
+        self.database_folder = os.getcwd()
+        self.database_path = os.path.join(self.database_folder, "work_time.db")
+
+        # database init
+        self.init_database()
 
         # central frame
         self.center_frame = ctk.CTkFrame(self.root)
@@ -46,12 +53,37 @@ class ArbeitszeitTracker:
         self.stop_button = ctk.CTkButton(self.buttons_frame, text="Stop", command=self.stop_timer, state="disabled", **button_style)
         self.stop_button.grid(row=0, column=3, padx=10, pady=5, sticky="ew")
 
+        # changing database path via button
+        self.change_db_frame = ctk.CTkFrame(self.center_frame)
+        self.change_db_frame.pack(pady=(10, 0))
+
+        self.change_db_button = ctk.CTkButton(self.change_db_frame, text="Choose Database folder", command=self.change_database_folder)
+        self.change_db_button.pack(side="left", padx=5)
+
+        self.db_path_label = ctk.CTkLabel(self.change_db_frame, text=self.format_path(self.database_path), wraplength=200)
+        self.db_path_label.pack(side="left", padx=5)
+
         # responsive grid settings
         for i in range(4):
             self.buttons_frame.grid_columnconfigure(i, weight=1)
 
         # start the clock update
         self.update_clock()
+
+    def init_database(self):
+            if not os.path.exists(self.database_folder):
+                os.makedirs(self.database_folder)
+            conn = sqlite3.connect(self.database_path)
+            cursor = conn.cursor()
+            cursor.execute('''CREATE TABLE IF NOT EXISTS work_time (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            date TEXT NOT NULL,
+                            start_time TEXT NOT NULL,
+                            end_time TEXT NOT NULL,
+                            duration TEXT NOT NULL
+                        )''')
+            conn.commit()
+            conn.close()
 
     def start_timer(self):
         if not self.running:
@@ -101,57 +133,35 @@ class ArbeitszeitTracker:
             self.time_label.configure(text=formatted_time)
         self.root.after(1000, self.update_clock)
 
-
     def save_time(self):
-            current_date = datetime.now().strftime("%d.%m.%Y")
-            file_date = datetime.now().strftime("%d_%m_%Y")
-            work_duration = time.strftime("%H:%M:%S", time.gmtime(self.elapsed_time))
+        current_date = datetime.now().strftime("%d.%m.%Y")
+        work_duration = time.strftime("%H:%M:%S", time.gmtime(self.elapsed_time))
 
-            session_data = {
-                "Startzeit": self.session_start,
-                "Endzeit": self.session_end,
-                "Dauer": work_duration
-            }
+        conn = sqlite3.connect(self.database_path)
+        cursor = conn.cursor()
+        cursor.execute('''INSERT INTO work_time (date, start_time, end_time, duration) 
+                          VALUES (?, ?, ?, ?)''', (current_date, self.session_start, self.session_end, work_duration))
+        conn.commit()
+        conn.close()
 
-            # generate file name based on today's date
-            file_name = f"arbeitszeit-{file_date}.json"
+    def change_database_folder(self):
+        new_folder = filedialog.askdirectory(title="Datenbankordner auswählen")
+        if new_folder:
+            self.database_folder = new_folder
+            self.database_path = os.path.join(self.database_folder, "time_tracker.db")
+            self.db_path_label.configure(text=self.format_path(self.database_path))
+            self.init_database()
 
-            try:
-                with open(file_name, "r") as f:
-                    arbeitszeit_data = json.load(f)
-            except (FileNotFoundError, json.JSONDecodeError):
-                arbeitszeit_data = []
-
-            # check if today's data already exists
-            date_entry = next((entry for entry in arbeitszeit_data if entry["Datum"] == current_date), None)
-
-            if date_entry:
-                # add new session data to the existing date
-                date_entry["Sitzungen"].append(session_data)
-
-                # update total time for the day
-                total_seconds = sum(
-                    int(s["Dauer"].split(":")[0]) * 3600 + int(s["Dauer"].split(":")[1]) * 60 + int(s["Dauer"].split(":")[2])
-                    for s in date_entry["Sitzungen"]
-                )
-                date_entry["Gesamtzeit"] = time.strftime("%H:%M:%S", time.gmtime(total_seconds))
-            else:
-                # create a new entry for the current date
-                date_entry = {
-                    "Datum": current_date,
-                    "Sitzungen": [session_data],
-                    "Gesamtzeit": work_duration
-                }
-                arbeitszeit_data.append(date_entry)
-
-            # save updated data back to the file
-            with open(file_name, "w") as f:
-                json.dump(arbeitszeit_data, f, indent=4, ensure_ascii=False)
+    def format_path(self, path):
+        if len(path) > 10:
+            head, tail = os.path.split(path)
+            return f".../{tail}"
+        return path
 
 # start program
 if __name__ == "__main__":
     root = ctk.CTk()
-    root.minsize(400, 250)
-    tracker = ArbeitszeitTracker(root)
+    root.minsize(400, 300)
+    tracker = WorkTimeTracker(root)
 
     root.mainloop()
