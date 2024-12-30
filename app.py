@@ -11,11 +11,11 @@ class WorkTimeTracker:
     def __init__(self, root):
         # GUI
         ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("blue")
+        ctk.set_default_color_theme("green")
 
         self.root = root
         self.root.title("Work Time Tracker")
-        self.root.geometry("400x300")
+        self.root.geometry("600x280")
 
         self.start_time = None
         self.elapsed_time = 0
@@ -28,18 +28,24 @@ class WorkTimeTracker:
 
         # central frame
         self.center_frame = ctk.CTkFrame(self.root)
-        self.center_frame.pack(expand=True, fill="both", padx=10, pady=10)
+        self.center_frame.pack(expand=True, fill="both", padx=20, pady=20)
 
         # time label
-        self.time_label = ctk.CTkLabel(self.center_frame, text="00:00:00", font=("Helvetica", 28, "bold"))
-        self.time_label.pack(pady=(0, 20))
+        self.time_label_frame = ctk.CTkFrame(self.center_frame, fg_color="lightgray", corner_radius=10)
+        self.time_label_frame.pack(pady=(0, 30), padx=10, fill="x")
+
+        self.time_label_title = ctk.CTkLabel(self.time_label_frame, text="Current Time", font=("Helvetica", 14, "bold"), text_color="black")
+        self.time_label_title.pack(pady=5)
+
+        self.time_label = ctk.CTkLabel(self.time_label_frame, text="00:00:00", font=("Helvetica", 45, "bold"), text_color="blue")
+        self.time_label.pack()
 
         # buttons frame
         self.buttons_frame = ctk.CTkFrame(self.center_frame)
-        self.buttons_frame.pack()
+        self.buttons_frame.pack(fill="x")
 
         # buttons with styling
-        button_style = {"font": ("Helvetica", 12)}
+        button_style = {"font": ("Helvetica", 14)}
 
         self.start_button = ctk.CTkButton(self.buttons_frame, text="Start", command=self.start_timer, **button_style)
         self.start_button.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
@@ -55,13 +61,13 @@ class WorkTimeTracker:
 
         # changing database path via button
         self.change_db_frame = ctk.CTkFrame(self.center_frame)
-        self.change_db_frame.pack(pady=(10, 0))
+        self.change_db_frame.pack(pady=(20, 0))
 
         self.change_db_button = ctk.CTkButton(self.change_db_frame, text="Choose Database folder", command=self.change_database_folder)
-        self.change_db_button.pack(side="left", padx=5)
+        self.change_db_button.pack(side="left", padx=10, pady=5)
 
-        self.db_path_label = ctk.CTkLabel(self.change_db_frame, text=self.format_path(self.database_path), wraplength=200)
-        self.db_path_label.pack(side="left", padx=5)
+        self.db_path_label = ctk.CTkLabel(self.change_db_frame, text=self.database_path, font=("Helvetica", 12), text_color="green", anchor="w")
+        self.db_path_label.pack(side="left", padx=10, pady=5, fill="x", expand=True)
 
         # responsive grid settings
         for i in range(4):
@@ -153,15 +159,15 @@ class WorkTimeTracker:
             self.init_database()
 
     def format_path(self, path):
-        if len(path) > 10:
+        if len(path) > 50:
             head, tail = os.path.split(path)
-            return f".../{tail}"
+            return f".../{head[-25:]}/{tail}"
         return path
 
 # start program
 if __name__ == "__main__":
     root = ctk.CTk()
-    root.minsize(400, 300)
+    root.minsize(600,280)
     tracker = WorkTimeTracker(root)
 
     root.mainloop()
