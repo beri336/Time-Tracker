@@ -5,6 +5,7 @@ import time
 from datetime import datetime
 import os
 import sqlite3
+import csv
 from tkinter import filedialog
 
 class WorkTimeTracker:
@@ -15,7 +16,7 @@ class WorkTimeTracker:
 
         self.root = root
         self.root.title("Work Time Tracker")
-        self.root.geometry("600x280")
+        self.root.geometry("600x320")
 
         self.start_time = None
         self.elapsed_time = 0
@@ -53,17 +54,24 @@ class WorkTimeTracker:
         self.pause_button = ctk.CTkButton(self.buttons_frame, text="Pause", command=self.pause_timer, state="disabled", **button_style)
         self.pause_button.grid(row=0, column=1, padx=10, pady=5, sticky="ew")
 
-        self.continue_button = ctk.CTkButton(self.buttons_frame, text="Weiter", command=self.continue_timer, state="disabled", **button_style)
+        self.continue_button = ctk.CTkButton(self.buttons_frame, text="Continue", command=self.continue_timer, state="disabled", **button_style)
         self.continue_button.grid(row=0, column=2, padx=10, pady=5, sticky="ew")
 
         self.stop_button = ctk.CTkButton(self.buttons_frame, text="Stop", command=self.stop_timer, state="disabled", **button_style)
         self.stop_button.grid(row=0, column=3, padx=10, pady=5, sticky="ew")
 
+        # Export button frame
+        self.export_frame = ctk.CTkFrame(self.center_frame)
+        self.export_frame.pack(pady=(10, 0))
+
+        self.export_button = ctk.CTkButton(self.export_frame, text="Export to CSV", command=self.export_to_csv, **button_style)
+        self.export_button.pack(pady=5)
+
         # changing database path via button
         self.change_db_frame = ctk.CTkFrame(self.center_frame)
         self.change_db_frame.pack(pady=(20, 0))
 
-        self.change_db_button = ctk.CTkButton(self.change_db_frame, text="Choose Database folder", command=self.change_database_folder)
+        self.change_db_button = ctk.CTkButton(self.change_db_frame, text="Choose Database Folder", command=self.change_database_folder)
         self.change_db_button.pack(side="left", padx=10, pady=5)
 
         self.db_path_label = ctk.CTkLabel(self.change_db_frame, text=self.database_path, font=("Helvetica", 12), text_color="green", anchor="w")
@@ -77,19 +85,19 @@ class WorkTimeTracker:
         self.update_clock()
 
     def init_database(self):
-            if not os.path.exists(self.database_folder):
-                os.makedirs(self.database_folder)
-            conn = sqlite3.connect(self.database_path)
-            cursor = conn.cursor()
-            cursor.execute('''CREATE TABLE IF NOT EXISTS work_time (
+        if not os.path.exists(self.database_folder):
+            os.makedirs(self.database_folder)
+        conn = sqlite3.connect(self.database_path)
+        cursor = conn.cursor()
+        cursor.execute('''CREATE TABLE IF NOT EXISTS work_time (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                             date TEXT NOT NULL,
                             start_time TEXT NOT NULL,
                             end_time TEXT NOT NULL,
                             duration TEXT NOT NULL
                         )''')
-            conn.commit()
-            conn.close()
+        conn.commit()
+        conn.close()
 
     def start_timer(self):
         if not self.running:
@@ -151,10 +159,10 @@ class WorkTimeTracker:
         conn.close()
 
     def change_database_folder(self):
-        new_folder = filedialog.askdirectory(title="Datenbankordner auswählen")
+        new_folder = filedialog.askdirectory(title="Choose Database Folder")
         if new_folder:
             self.database_folder = new_folder
-            self.database_path = os.path.join(self.database_folder, "time_tracker.db")
+            self.database_path = os.path.join(self.database_folder, "work_time.db")
             self.db_path_label.configure(text=self.format_path(self.database_path))
             self.init_database()
 
@@ -164,10 +172,26 @@ class WorkTimeTracker:
             return f".../{head[-25:]}/{tail}"
         return path
 
+    def export_to_csv(self):
+        save_path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")], title="Export to CSV")
+        if save_path:
+            conn = sqlite3.connect(self.database_path)
+            cursor = conn.cursor()
+            cursor.execute('''SELECT date, start_time, end_time, duration FROM work_time''')
+            rows = cursor.fetchall()
+            conn.close()
+
+            with open(save_path, mode="w", newline="", encoding="utf-8") as file:
+                writer = csv.writer(file)
+                writer.writerow(["Date", "Start Time", "End Time", "Duration"])
+                writer.writerows(rows)
+
+            print(f"Data exported to {save_path}")
+
 # start program
 if __name__ == "__main__":
     root = ctk.CTk()
-    root.minsize(600,280)
+    root.minsize(600, 320)
     tracker = WorkTimeTracker(root)
 
     root.mainloop()
