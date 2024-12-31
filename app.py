@@ -7,6 +7,7 @@ import os
 import sqlite3
 import csv
 from tkinter import filedialog
+from tkinter import messagebox
 
 class WorkTimeTracker:
     def __init__(self, root):
@@ -23,6 +24,10 @@ class WorkTimeTracker:
         self.running = False
         self.database_folder = os.getcwd()
         self.database_path = os.path.join(self.database_folder, "work_time.db")
+
+        # Reminder settings
+        self.reminder_interval = 60 * 60 # Default: 1 hour
+        self.last_reminder_time = None
 
         # database init
         self.init_database()
@@ -120,6 +125,7 @@ class WorkTimeTracker:
             self.pause_button.configure(state="normal")
             self.stop_button.configure(state="normal")
             self.continue_button.configure(state="disabled")
+            self.last_reminder_time = time.time()
 
     def pause_timer(self):
         if self.running:
@@ -134,6 +140,7 @@ class WorkTimeTracker:
             self.running = True
             self.pause_button.configure(state="normal")
             self.continue_button.configure(state="disabled")
+            self.last_reminder_time = time.time()
 
     def stop_timer(self):
         if self.start_time is not None:
@@ -157,7 +164,16 @@ class WorkTimeTracker:
             elapsed = time.time() - self.start_time
             formatted_time = time.strftime("%H:%M:%S", time.gmtime(elapsed))
             self.time_label.configure(text=formatted_time)
+
+            # Check for reminders
+            if self.last_reminder_time and (time.time() - self.last_reminder_time) >= self.reminder_interval:
+                self.send_reminder()
+                self.last_reminder_time = time.time()
+
         self.root.after(1000, self.update_clock)
+
+    def send_reminder(self):
+        messagebox.showinfo("Reminder", "You have been working for a while. Consider taking a short break!")
 
     def save_time(self):
         current_date = datetime.now().strftime("%d.%m.%Y")
