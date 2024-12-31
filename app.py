@@ -16,7 +16,7 @@ class WorkTimeTracker:
 
         self.root = root
         self.root.title("Work Time Tracker")
-        self.root.geometry("600x320")
+        self.root.geometry("600x450")
 
         self.start_time = None
         self.elapsed_time = 0
@@ -66,6 +66,18 @@ class WorkTimeTracker:
 
         self.export_button = ctk.CTkButton(self.export_frame, text="Export to CSV", command=self.export_to_csv, **button_style)
         self.export_button.pack(pady=5)
+
+        # summary dashboard frame
+        self.summary_frame = ctk.CTkFrame(self.center_frame)
+        self.summary_frame.pack(pady=(20, 0), fill="x")
+
+        self.summary_title = ctk.CTkLabel(self.summary_frame, text="Summary Dashboard", font=("Helvetica", 16, "bold"), text_color="green")
+        self.summary_title.pack(pady=5)
+
+        self.summary_content = ctk.CTkLabel(self.summary_frame, text="", font=("Helvetica", 12), text_color="lightgrey")
+        self.summary_content.pack(pady=5)
+
+        self.update_summary()
 
         # changing database path via button
         self.change_db_frame = ctk.CTkFrame(self.center_frame)
@@ -157,6 +169,7 @@ class WorkTimeTracker:
                           VALUES (?, ?, ?, ?)''', (current_date, self.session_start, self.session_end, work_duration))
         conn.commit()
         conn.close()
+        self.update_summary()
 
     def change_database_folder(self):
         new_folder = filedialog.askdirectory(title="Choose Database Folder")
@@ -188,10 +201,24 @@ class WorkTimeTracker:
 
             print(f"Data exported to {save_path}")
 
+    def update_summary(self):
+        conn = sqlite3.connect(self.database_path)
+        cursor = conn.cursor()
+        cursor.execute('''SELECT date, COUNT(*), SUM(strftime('%s', duration) - strftime('%s', '00:00:00')) FROM work_time GROUP BY date''')
+        rows = cursor.fetchall()
+        conn.close()
+
+        summary_text = ""
+        for row in rows:
+            total_duration = time.strftime("%H:%M:%S", time.gmtime(row[2]))
+            summary_text += f"Date: {row[0]}\nSessions: {row[1]}\nTotal Time: {total_duration}\n\n"
+
+        self.summary_content.configure(text=summary_text)
+
 # start program
 if __name__ == "__main__":
     root = ctk.CTk()
-    root.minsize(600, 320)
+    root.minsize(600, 450)
     tracker = WorkTimeTracker(root)
 
     root.mainloop()
