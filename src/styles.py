@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QPushButton, QLabel, QSpinBox
+from PySide6.QtWidgets import QPushButton, QLabel
 
 from .config import Config as _conf
 

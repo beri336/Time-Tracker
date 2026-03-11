@@ -6,51 +6,36 @@ import time
 import shutil
 from datetime import datetime
 
+from .config import Config as _conf
+
 
 def ensure_database(database_folder: str, 
-                    filename: str = "work_time.db") -> str:
+                    filename: str = _conf.db_file) -> str:
     os.makedirs(database_folder, exist_ok=True)
-    db_path = "work_time.db"
-    #db_path = os.path.join(database_folder, filename)
+    db_path = os.path.join(database_folder, filename)
     conn = sqlite3.connect(db_path)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS work_time (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            date       TEXT NOT NULL,
-            start_time TEXT NOT NULL,
-            end_time   TEXT NOT NULL,
-            duration   TEXT NOT NULL
-        )
-    """)
+    conn.execute(_conf.txt_ensure_db)
     conn.commit()
     conn.close()
     return db_path
 
 def change_database(dest_folder: str) -> str:
     os.makedirs(dest_folder, exist_ok=True)
-    return os.path.join(dest_folder, "work_time.db")
+    return os.path.join(dest_folder, _conf.db_file)
 
 def clone_database(src_path: str, dest_path: str):
     shutil.copy2(src_path, dest_path)
 
 def new_database(dest_path: str):
     conn = sqlite3.connect(dest_path)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS work_time (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            date       TEXT NOT NULL,
-            start_time TEXT NOT NULL,
-            end_time   TEXT NOT NULL,
-            duration   TEXT NOT NULL
-        )
-    """)
+    conn.execute(_conf.txt_new_db)
     conn.commit()
     conn.close()
 
 def insert_entry(db_path: str, date: str, start: str, end: str, duration: str):
     conn = sqlite3.connect(db_path)
     conn.execute(
-        "INSERT INTO work_time (date, start_time, end_time, duration) VALUES (?, ?, ?, ?)",
+        _conf.txt_insert_entry,
         (date, start, end, duration),
     )
     conn.commit()
@@ -59,14 +44,7 @@ def insert_entry(db_path: str, date: str, start: str, end: str, duration: str):
 def summary_by_date(db_path: str):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute("""
-        SELECT date,
-               COUNT(*),
-               SUM(strftime('%s', duration) - strftime('%s', '00:00:00'))
-        FROM work_time
-        GROUP BY date
-        ORDER BY date DESC
-    """)
+    cursor.execute(_conf.txt_summary_by_date)
     rows = cursor.fetchall()
     conn.close()
     return [
@@ -81,7 +59,7 @@ def summary_by_date(db_path: str):
 
 def export_csv(db_path: str, path: str):
     conn = sqlite3.connect(db_path)
-    rows = conn.execute("SELECT date, start_time, end_time, duration FROM work_time").fetchall()
+    rows = conn.execute(_conf.txt_export_csv).fetchall()
     conn.close()
     import csv
     with open(path, "w", newline="", encoding="utf-8") as f:
@@ -102,7 +80,7 @@ def import_csv(db_path: str, path: str):
         for row in reader:
             try:
                 conn.execute(
-                    "INSERT INTO work_time (date, start_time, end_time, duration) VALUES (?, ?, ?, ?)",
+                    _conf.txt_import_csv,
                     (
                         row.get("Datum") or row.get("Date", ""),
                         row.get("Anfangszeit") or row.get("Start Time", ""),
@@ -120,7 +98,7 @@ def import_csv(db_path: str, path: str):
 def export_json(db_path: str, path: str):
     conn = sqlite3.connect(db_path)
     rows = conn.execute(
-        "SELECT id, date, start_time, end_time, duration FROM work_time ORDER BY date DESC"
+        _conf.txt_export_json
     ).fetchall()
     conn.close()
     data = {
@@ -137,28 +115,13 @@ def export_json(db_path: str, path: str):
 
 def all_entries(db_path: str):
     conn = sqlite3.connect(db_path)
-    rows = conn.execute("SELECT id, date, start_time, end_time, duration FROM work_time ORDER BY date DESC, start_time DESC").fetchall()
+    rows = conn.execute(_conf.txt_all_entries).fetchall()
     conn.close()
     return rows
 
 def month_and_week_stats(db_path: str):
     conn = sqlite3.connect(db_path)
-    month_rows = conn.execute("""
-        SELECT substr(date, 4, 7) AS month,
-               COUNT(*),
-               SUM(strftime('%s', duration) - strftime('%s', '00:00:00'))
-        FROM work_time
-        GROUP BY month
-        ORDER BY month DESC
-    """).fetchall()
-    week_rows = conn.execute("""
-        SELECT strftime('%Y-KW%W',
-                   substr(date,7,4)||'-'||substr(date,4,2)||'-'||substr(date,1,2)) AS week,
-               COUNT(*),
-               SUM(strftime('%s', duration) - strftime('%s', '00:00:00'))
-        FROM work_time
-        GROUP BY week
-        ORDER BY week DESC
-    """).fetchall()
+    month_rows = conn.execute(_conf.txt_month_rows).fetchall()
+    week_rows = conn.execute(_conf.txt_week_rows).fetchall()
     conn.close()
     return month_rows, week_rows

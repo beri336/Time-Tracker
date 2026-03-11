@@ -11,14 +11,13 @@ from PySide6.QtWidgets import (
     QFileDialog, QMessageBox,
 )
 
+from .config import Config as _conf
 from .styles import ModernButton, ButtonStyle, main_window_style
 from .db import (
     ensure_database, change_database, clone_database, new_database,
-    summary_by_date, export_csv, import_csv, export_json,
+    summary_by_date, export_csv, import_csv, export_json, insert_entry
 )
 from .dialogs import ManualEntryDialog, StartTimeDialog, EndTimeDialog, AllEntriesDialog, StatisticsDialog
-
-from .config import Config as _conf
 
 
 class WorkTimeTracker(QMainWindow):
@@ -348,7 +347,6 @@ class WorkTimeTracker(QMainWindow):
             self.elapsed_time = time.time() - self.start_time
             self.session_end  = datetime.now().strftime("%H:%M:%S")
             self.running = False
-            from .db import insert_entry
             insert_entry(
                 self.database_path,
                 datetime.now().strftime("%d.%m.%Y"),
