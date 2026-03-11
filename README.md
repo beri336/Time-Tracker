@@ -1,260 +1,206 @@
-# Time Tracker
+# Work Time Tracker
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
-![Python](https://img.shields.io/badge/python-3.8+-green.svg)
-![License](https://img.shields.io/badge/license-MIT-orange.svg)
+![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20MacOS%20%7C%20Linux-334.svg)
+![Python](https://img.shields.io/badge/python-3.10+-green.svg)
 ![PySide6](https://img.shields.io/badge/PySide6-6.6+-purple.svg)
-![Platform](https://img.shields.io/badge/platform-MacOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)
 
-**A modern, intuitive work time tracking application with beautiful UI**
-
-[Features](#5-features) • [Installation](#installation) • [Usage](#3-usage) • [Troubleshooting](#6-troubleshooting) • [Contributing](#7-contributing)
+**Modern desktop application for precise work time tracking**
 
 </div>
 
-<br><hr>
+![Banner](Pictures/Banner.png)
+
+<div align="center">
+
+[Features](#features) • [Installation](#installation) • [Usage](#usage) • [Database](#database) • [Code Structure](#code-structure) • [Me](#me) • [License](#license)
+
+</div>
+
+<br>
 
 ## Motivation
 
-The **Time Tracker** tool was developed to quickly and efficiently record work hours independently. As part of my bachelor's thesis, I wanted to track my own working hours and created this small tool. It allows users to:  
-- Start tracking time with an intuitive modern interface
-- Take breaks and resume work after breaks
-- Finish the day and save the session in a database
-- Export the work data for further analysis
-- Get reminders to take breaks during long sessions
-- Enjoy a modern, visually appealing UI with smooth animations
+The **Work Time Tracker** was created to solve the challenge of accurately tracking work hours with a professional, intuitive interface. Originally developed for personal use during thesis work, it has evolved into a complete time tracking solution that provides:
 
-<br><hr>
+- Precise session tracking with pause/resume functionality
+- Permanent data storage in SQLite database
+- Multiple input methods (live timer, manual entry, retroactive start/end times)
+- Professional data export (CSV, JSON) for analysis
+- Comprehensive statistics (daily, weekly, monthly overviews)
+- Clean, modern UI with consistent design system
+
+<hr>
 
 ## Installation
 
 ### Prerequisites
-- **Git** 2.30+ ([Download](https://git-scm.com))
-- **Python** 3.9+ ([Download](https://www.python.org))
-
-### Steps
-1. **Clone this repository**:  
-```
-git clone https://github.com/beri336/Time-Tracker
-```
-
-2. **Navigate to the directory**:  
-```
-cd Time-Tracker
-```
-
-3. **Install dependencies**:  
-```
-pip3 install PySide6
-```  
-
-Alternatively, use `requirements.txt`:  
-```
-pip3 install -r requirements.txt
-```
+- **Python** 3.10+ ([Download](https://www.python.org))
+- **PySide6** 6.6+ 
 
 ### Quick Start
-```
-python3 app.py
+```bash
+pip3 install pyside6
+python3 main.py
 ```
 
-<br><hr>
+### From Source
+```bash
+git clone https://github.com/beri336/Time-Tracker
+cd time-tracker
+pip3 install pyside6
+python3 main.py
+```
+
+<hr>
 
 ## Usage
 
-### Running the Application
+### Main Interface
 
+![Main-Interface](Pictures/GUI.png)
+
+### Core Workflow
+1. **Click "Start"** -> Timer begins counting up
+2. **"Pause"** -> Timer stops, elapsed time preserved
+3. **"Continue"** -> Timer resumes from paused time
+4. **"Stop"** -> Session saved to database automatically
+5. **Summary updates** -> Daily totals refresh instantly
+
+### Advanced Features
+
+| Feature | Description |
+|---------|-------------|
+| **Manual Entry** | Complete dialog for date/time/pause input with auto-duration calculation |
+| **Retro Start** | Set start time in past → timer shows correct elapsed time |
+| **Retro End** | Set end time for running session → auto-save with validation |
+| **All Entries** | Table view with delete function, sortable columns |
+| **Statistics** | Weekly/monthly summaries with total hours per period |
+
+<hr>
+
+## Features
+
+### Time Tracking
+- Live timer with start/pause/continue/stop controls
+- Retroactive start/end time entry for forgotten sessions
+- Manual entry dialog with pause duration calculation
+- Status indicators (Running/Paused/Ready)
+
+### Data Management
 ```
-python3 app.py
+work_time table:
+├── id (PK, autoincrement)
+├── date (dd.MM.yyyy)
+├── start_time (HH:mm:ss)  
+├── end_time (HH:mm:ss)
+└── duration (HH:mm:ss, net work time)
 ```
+- SQLite database (single file, portable)
+- Create new empty database
 
-![GUI](Pictures/GUI.png)
+### Export/Import
+- **CSV**: Compatible with Excel/Google Sheets
+- **JSON**: Structured data with metadata
+- Multi-language CSV headers supported
 
-### Interface Components
+### Analysis
+- Live daily summary dashboard
+- Weekly overview (KW01, KW02...)
+- Monthly overview (MM.YYYY format)
+- Session counts and total hours per period
 
-#### Display Elements
-- **Current Time Display**: Large, prominent timer with gradient background showing elapsed work time
-- **Database Path**: Current database storage location (displayed at bottom)
-- **Summary Dashboard**: Scrollable card with daily work summaries, session counts, and total hours
+### UI/UX
+- Modern gradient design system
+- Responsive layouts
+- Professional dialog designs
+- HTML-formatted summary display
 
-<br>
+<hr>
 
-#### Control Buttons
+## Database
 
-| Button | Color | Function |
-|--------|-------|----------|
-| **Start** | 🟢 Green | Begins a new work session |
-| **Pause** | 🟠 Orange | Pauses current session without ending it |
-| **Continue** | 🔵 Blue | Resumes a paused session |
-| **Stop** | 🔴 Red | Ends session and saves to database |
-| **Export to CSV** | 🟣 Purple | Exports all data to CSV file |
-| **Choose Database Folder** | ⚫ Gray | Changes database storage location |
-
-<br><hr>
-
-## 4. Code
-
-### Architecture
-
-The application is built using PySide6 (Qt6) with a modern component-based architecture.
-
-#### Custom Widgets
-
-**RoundedFrame**
-- Custom `QFrame` subclass with antialiased rounded corners
-- Configurable border radius (default: 12-16px)
-- Supports QPainterPath for smooth rendering
-
-**AnimatedButton**
-- Enhanced `QPushButton` with hover animations
-- Uses `QPropertyAnimation` for smooth scaling (105% on hover)
-- Implements `QEasingCurve.OutCubic` for natural motion
-
-### Core Functions
-
-| Function | Description |
-|----------|-------------|
-| `setup_ui()` | Initializes and arranges all UI components with modern styling |
-| `apply_styles()` | Applies comprehensive QSS stylesheet for design system |
-| `init_database()` | Creates SQLite database structure and folder |
-| `start_timer()` | Starts timer and records session start time |
-| `pause_timer()` | Pauses timer while retaining elapsed time |
-| `continue_timer()` | Resumes paused timer from last state |
-| `stop_timer()` | Stops timer, saves to database, and resets |
-| `reset_timer()` | Resets timer and elapsed time to zero |
-| `update_clock()` | Real-time clock update using QTimer (1s interval) |
-| `send_reminder()` | Displays QMessageBox break reminder |
-| `save_time()` | Persists session data to SQLite database |
-| `change_database_folder()` | Opens QFileDialog for folder selection |
-| `export_to_csv()` | Exports session data via QFileDialog |
-| `update_summary()` | Refreshes dashboard with HTML-formatted content |
-| `format_path()` | Truncates long paths for display |
-| `main()` | Application entry point with QApplication |
-
-<br><hr>
-
-## 5. Features
-
-### Core Functionality
-- ⏱️ Precise time tracking with start, pause, continue, and stop controls
-- 💾 Automatic session persistence to SQLite database
-- 📊 Interactive summary dashboard with daily statistics
-- 📁 Flexible database location management
-- 📄 CSV export for external analysis and reporting
-- 🔔 Configurable break reminders (default: 1 hour)
-
-### Modern UI/UX
-- 🎨 Gradient-based design with smooth color transitions
-- ⭕ Rounded corners (12-16px) on all cards and buttons
-- ✨ Smooth hover animations with 105% scaling
-- 🎯 Color-coded buttons for intuitive operation
-- 📱 Responsive layout adapting to window size
-- 🖋️ Professional Segoe UI typography
-- 📜 Custom-styled scrollbars
-- 💳 Card-based design system with clear hierarchy
-
-### Technical Highlights
-- Built with PySide6/Qt6 framework
-- Custom widget implementation (RoundedFrame, AnimatedButton)
-- QPropertyAnimation for smooth transitions
-- Comprehensive QSS styling system
-- Cross-platform compatibility (Windows, macOS, Linux)
-- Antialiased rendering for crisp visuals
-
-<br><hr>
-
-## 6. Troubleshooting
-
-### Installation Issues
-
-**PySide6 Installation Fails**
-```
-# Upgrade pip first
-pip3 install --upgrade pip3
-
-# Try specific version
-pip3 install PySide6==6.6.0
-
-# Use pip3 on some systems
-pip3 install PySide6
+**Schema:**
+```sql
+CREATE TABLE work_time (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL,        -- '11.03.2026'
+    start_time TEXT NOT NULL,  -- '09:15:23' 
+    end_time TEXT NOT NULL,    -- '17:45:38'
+    duration TEXT NOT NULL     -- '08:12:45'
+);
 ```
 
-### Display Issues
+**Location:** `work_time.db` in application directory (changeable)
 
-**UI Looks Distorted or Blurry**
-- Enable high-DPI scaling: Set `QT_AUTO_SCREEN_SCALE_FACTOR=1`
-- Check system scaling settings (Windows: 100-150% recommended)
+**Sample Query:**
+```sql
+SELECT date, COUNT(*), SUM(strftime('%s', duration)) as total_seconds
+FROM work_time 
+GROUP BY date 
+ORDER BY date DESC;
+```
 
-### Database Issues
+<hr>
 
-**Cannot Save Sessions**
-- Verify write permissions for database folder
-- Check available disk space
-- Ensure folder path doesn't contain special characters
+## Code Structure
 
-**Data Not Appearing**
-- Confirm session was stopped (not just paused)
-- Check Summary Dashboard scrollbar for overflow
-- Open `work_time.db` with SQLite browser to verify data
+### Key Components (500+ LOC)
 
-<br><hr>
+| Module | Responsibilities |
+|--------|------------------|
+| **`WorkTimeTracker`** | Main window, orchestrates all functionality |
+| **`Configs`** | Centralized labels, dimensions, menu texts |
+| **`ButtonStyle`** | Design system for consistent button appearance |
+| **`ModernButton`** | Custom QPushButton |
 
-## 7. Contributing
+### Core Methods
+
+```py
+# Timer Control
+start_timer()           # Begins session
+pause_timer()           # Pauses with elapsed time preservation  
+continue_timer()        # Resumes from pause
+stop_timer()            # Saves and resets
+
+# Data Operations  
+init_database()         # Creates SQLite table
+save_time()             # INSERT session to DB
+update_summary()        # Refreshes HTML dashboard
+export_to_csv()         # Full data export
+import_from_csv()       # Error-tolerant import
+
+# UI Builders
+_create_header()        # Title bar
+_create_timer_card()    # Main timer display
+_create_summary_card()  # Daily statistics
+_setup_menu()           # Complete menu system
+```
+
+### Architecture Highlights
+- **MVC pattern** - Clean separation of UI/logic/data
+- **Centralized styling** via helper methods
+
+<hr>
+
+## Me
+
+[![Created By](https://img.shields.io/badge/Created_By-beri336-orange?style=flat-square&labelColor=blue&logo=github&logoColor=white)](https://github.com/beri336)
+
+[![Created By](https://img.shields.io/badge/Created_By-berkants-orange?style=flat-square&labelColor=blue&logo=bitbucket&logoColor=white)](https://bitbucket.org/berkants/workspace/projects/DEV)
+
+<hr>
+
+## License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 <div align="center">
 
-![Created By](Pictures/created-by-berkant-simsek.svg)
+**Built with PySide6 • Cross-platform**
 
-<br><hr>
-
-## 8. License
-
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
-
-<br><hr>
-
-## 9. Version
-
-### Version 2.0.0 (Current)
-**Release Date**: December 2024
-
-**Major Changes:**
-- Complete UI redesign with PySide6/Qt6 framework
-- Modern gradient-based design system
-- Custom widget implementation (RoundedFrame, AnimatedButton)
-- Smooth button hover animations with QPropertyAnimation
-- Enhanced Summary Dashboard with HTML formatting
-- Improved typography with Segoe UI font family
-- Comprehensive QSS styling
-- Better responsive layout and spacing
-- Color-coded buttons for intuitive UX
-- Cross-platform compatibility improvements
-
-**Breaking Changes:**
-- Migration from CustomTkinter to PySide6
-- Different dependency requirements
-
----
-
-### Version 1.0.0
-**Release Date**: Initial Release
-
-**Features:**
-- Core time tracking functionality
-- Basic CustomTkinter UI
-- SQLite database integration
-- CSV export capability
-- Break reminders
-- Simple interface
-
----
-
-<div align="center">
-
-**Made with ❤️ and Python**
-
-[⬆ Back to Top](#time-tracker)
+[⬆ Back to Top](#work-time-tracker)
 
 </div>
